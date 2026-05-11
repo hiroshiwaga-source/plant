@@ -1,7 +1,8 @@
 import { config } from "dotenv";
 import { defineConfig } from "vitest/config";
 
-config();
+// Allow .env to override empty placeholders some shells/IDEs inject for sensitive keys.
+config({ override: true });
 
 export default defineConfig({
   test: {
