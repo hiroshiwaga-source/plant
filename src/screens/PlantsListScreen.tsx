@@ -1,6 +1,7 @@
 import { useCallback, useLayoutEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Pressable,
   RefreshControl,
@@ -55,6 +56,8 @@ export function PlantsListScreen() {
           onPress={() => navigation.navigate("PlantForm", {})}
           hitSlop={12}
           style={styles.headerBtn}
+          accessibilityLabel="植物を追加"
+          accessibilityRole="button"
         >
           <Text style={styles.headerBtnText}>追加</Text>
         </Pressable>
@@ -90,7 +93,18 @@ export function PlantsListScreen() {
         ListFooterComponent={
           <Pressable
             style={styles.logout}
-            onPress={() => void supabase.auth.signOut()}
+            onPress={() => {
+              Alert.alert("ログアウト", "ログアウトしますか？", [
+                { text: "キャンセル", style: "cancel" },
+                {
+                  text: "ログアウト",
+                  style: "destructive",
+                  onPress: () => void supabase.auth.signOut(),
+                },
+              ]);
+            }}
+            accessibilityLabel="ログアウト"
+            accessibilityRole="button"
           >
             <Text style={styles.logoutText}>ログアウト</Text>
           </Pressable>
@@ -106,6 +120,8 @@ export function PlantsListScreen() {
             onPress={() =>
               navigation.navigate("PlantDetail", { plantId: item.id })
             }
+            accessibilityRole="button"
+            accessibilityLabel={`植物 ${item.display_name?.trim() || "名称未設定"}`}
           >
             <Text style={styles.cardTitle}>
               {item.display_name?.trim() || "（名称未設定）"}

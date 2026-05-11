@@ -2,15 +2,18 @@ import { useCallback, useLayoutEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
+import { formatCareWhen } from "../lib/formatCareWhen";
 import { supabase } from "../lib/supabase";
 import type { MainStackParamList } from "../navigation/types";
 import type { CareLogType, Database } from "../types/database";
@@ -41,8 +44,10 @@ export function PlantDetailScreen() {
   const [plant, setPlant] = useState<Plant | null>(null);
   const [logs, setLogs] = useState<CareLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState<CareLogType | null>(null);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [modalType, setModalType] = useState<CareLogType | null>(null);
+  const [modalNote, setModalNote] = useState("");
 
   const load = useCallback(async () => {
     setError(null);
@@ -82,6 +87,8 @@ export function PlantDetailScreen() {
           onPress={() => navigation.navigate("PlantForm", { plantId })}
           hitSlop={12}
           style={styles.headerBtn}
+          accessibilityLabel="植物を編集"
+          accessibilityRole="button"
         >
           <Text style={styles.headerBtnText}>編集</Text>
         </Pressable>
@@ -89,18 +96,32 @@ export function PlantDetailScreen() {
     });
   }, [navigation, plantId]);
 
-  async function addLog(logType: CareLogType) {
-    setAdding(logType);
+  function openLogModal(type: CareLogType) {
+    setModalNote("");
+    setModalType(type);
+  }
+
+  function closeLogModal() {
+    setModalType(null);
+    setModalNote("");
+  }
+
+  async function confirmLog() {
+    if (!modalType) return;
+    setSaving(true);
     setError(null);
+    const noteTrim = modalNote.trim();
     const { error: iErr } = await supabase.from("care_logs").insert({
       plant_id: plantId,
-      log_type: logType,
+      log_type: modalType,
+      notes: noteTrim.length > 0 ? noteTrim : null,
     });
-    setAdding(null);
+    setSaving(false);
     if (iErr) {
       setError("記録を追加できませんでした。");
       return;
     }
+    closeLogModal();
     await load();
   }
 
@@ -128,6 +149,8 @@ export function PlantDetailScreen() {
     navigation.navigate("PlantsList");
   }
 
+  const modalTitle = modalType ? `${logTypeLabel(modalType)}を記録` : "";
+
   if (loading && !plant) {
     return (
       <View style={styles.centered}>
@@ -148,7 +171,7 @@ export function PlantDetailScreen() {
     <ScrollView style={styles.root} contentContainerStyle={styles.inner}>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <View style={styles.hero}>
-        <Text style={styles.title}>
+        <Text style={styles.title} accessibilityRole="header">
           {plant.display_name?.trim() || "（名称未設定）"}
         </Text>
         {plant.species_name ? (
@@ -158,19 +181,20 @@ export function PlantDetailScreen() {
       </View>
 
       <Text style={styles.section}>記録を追加</Text>
+      <Text style={styles.hint}>
+        タップ後にメモを付けられます（液肥の倍率・剪定部位など）。
+      </Text>
       <View style={styles.actions}>
         {LOG_ACTIONS.map(({ type, label }) => (
           <Pressable
             key={type}
-            style={[styles.actionBtn, adding === type && styles.actionBtnBusy]}
-            onPress={() => void addLog(type)}
-            disabled={adding !== null}
+            style={[styles.actionBtn, saving && styles.actionBtnBusy]}
+            onPress={() => openLogModal(type)}
+            disabled={saving}
+            accessibilityLabel={`${label}の記録を追加`}
+            accessibilityRole="button"
           >
-            {adding === type ? (
-              <ActivityIndicator color="#1b5e20" size="small" />
-            ) : (
-              <Text style={styles.actionBtnText}>{label}</Text>
-            )}
+            <Text style={styles.actionBtnText}>{label}</Text>
           </Pressable>
         ))}
       </View>
@@ -181,20 +205,74 @@ export function PlantDetailScreen() {
       ) : (
         logs.map((log) => (
           <View key={log.id} style={styles.logRow}>
-            <Text style={styles.logType}>{logTypeLabel(log.log_type)}</Text>
-            <Text style={styles.logDate}>
-              {new Date(log.occurred_at).toLocaleString("ja-JP", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })}
-            </Text>
+            <View style={styles.logMain}>
+              <Text style={styles.logType}>{logTypeLabel(log.log_type)}</Text>
+              {log.notes ? (
+                <Text style={styles.logNotes} numberOfLines={4}>
+                  {log.notes}
+                </Text>
+              ) : null}
+            </View>
+            <Text style={styles.logDate}>{formatCareWhen(log.occurred_at)}</Text>
           </View>
         ))
       )}
 
-      <Pressable style={styles.deleteBtn} onPress={confirmDelete}>
+      <Pressable
+        style={styles.deleteBtn}
+        onPress={confirmDelete}
+        accessibilityLabel="この植物を削除"
+        accessibilityRole="button"
+      >
         <Text style={styles.deleteBtnText}>この植物を削除</Text>
       </Pressable>
+
+      <Modal
+        visible={modalType !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={closeLogModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>{modalTitle}</Text>
+            <Text style={styles.modalLabel}>メモ（任意）</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={modalNote}
+              onChangeText={setModalNote}
+              placeholder="例: 花宝2倍希釈、強剪定、底面給水"
+              placeholderTextColor="#999"
+              multiline
+              accessibilityLabel="この世話のメモ"
+            />
+            <View style={styles.modalActions}>
+              <Pressable
+                style={styles.modalCancel}
+                onPress={closeLogModal}
+                disabled={saving}
+                accessibilityLabel="キャンセル"
+                accessibilityRole="button"
+              >
+                <Text style={styles.modalCancelText}>キャンセル</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalSave, saving && styles.modalSaveDisabled]}
+                onPress={() => void confirmLog()}
+                disabled={saving}
+                accessibilityLabel="記録を保存"
+                accessibilityRole="button"
+              >
+                {saving ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.modalSaveText}>記録する</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -257,7 +335,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: "#333",
+    marginBottom: 6,
+  },
+  hint: {
+    fontSize: 13,
+    color: "#666",
     marginBottom: 10,
+    lineHeight: 18,
   },
   actions: {
     flexDirection: "row",
@@ -290,7 +374,8 @@ const styles = StyleSheet.create({
   logRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
+    gap: 8,
     backgroundColor: "#fff",
     padding: 14,
     borderRadius: 8,
@@ -298,14 +383,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#eee",
   },
+  logMain: {
+    flex: 1,
+    minWidth: 0,
+  },
   logType: {
     fontSize: 15,
     fontWeight: "500",
     color: "#333",
   },
+  logNotes: {
+    marginTop: 4,
+    fontSize: 13,
+    color: "#555",
+    lineHeight: 18,
+  },
   logDate: {
     fontSize: 13,
     color: "#777",
+    flexShrink: 0,
   },
   deleteBtn: {
     marginTop: 28,
@@ -320,5 +416,67 @@ const styles = StyleSheet.create({
     color: "#c62828",
     fontWeight: "600",
     fontSize: 15,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    padding: 24,
+  },
+  modalCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1b3d1b",
+    marginBottom: 16,
+  },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 6,
+    color: "#333",
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 12,
+    minHeight: 88,
+    textAlignVertical: "top",
+    fontSize: 15,
+    marginBottom: 20,
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 12,
+  },
+  modalCancel: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  modalCancelText: {
+    color: "#666",
+    fontSize: 16,
+  },
+  modalSave: {
+    backgroundColor: "#2e7d32",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    minWidth: 120,
+    alignItems: "center",
+  },
+  modalSaveDisabled: {
+    opacity: 0.6,
+  },
+  modalSaveText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

@@ -142,6 +142,7 @@ export function AuthScreen() {
         onChangeText={setEmail}
         placeholder="you@example.com"
         placeholderTextColor="#999"
+        accessibilityLabel="メールアドレス"
       />
       <Text style={styles.label}>パスワード</Text>
       <TextInput
@@ -152,6 +153,7 @@ export function AuthScreen() {
         onChangeText={setPassword}
         placeholder={`${MIN_PASSWORD_LEN}文字以上`}
         placeholderTextColor="#999"
+        accessibilityLabel="パスワード"
       />
       {banner ? (
         <Text
@@ -166,6 +168,8 @@ export function AuthScreen() {
         style={[styles.button, loading && styles.buttonDisabled]}
         onPress={() => void signIn()}
         disabled={loading}
+        accessibilityLabel="ログイン"
+        accessibilityRole="button"
       >
         {loading ? (
           <ActivityIndicator color="#fff" />
@@ -177,6 +181,8 @@ export function AuthScreen() {
         style={[styles.buttonSecondary, loading && styles.buttonDisabled]}
         onPress={() => void signUp()}
         disabled={loading}
+        accessibilityLabel="アカウント登録"
+        accessibilityRole="button"
       >
         <Text style={styles.buttonSecondaryText}>アカウント登録</Text>
       </Pressable>

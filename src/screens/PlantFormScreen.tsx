@@ -138,6 +138,8 @@ export function PlantFormScreen() {
         style={[styles.save, saving && styles.saveDisabled]}
         onPress={() => void save()}
         disabled={saving}
+        accessibilityLabel="植物を保存"
+        accessibilityRole="button"
       >
         {saving ? (
           <ActivityIndicator color="#fff" />
