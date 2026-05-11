@@ -1,0 +1,22 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+
+# Expo / Node
+node_modules/
+dist/
+.expo/
+web-build/
+.metro-health-check*
+*.tsbuildinfo
+.kotlin/
+*.orig.*
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+/ios
+/android

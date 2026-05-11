@@ -1,0 +1,15 @@
+# Local Supabase (https://supabase.com/docs/guides/cli/config)
+# Run: npx supabase start | link | db push
+
+project_id = "plant-local"
+
+[api]
+enabled = true
+schemas = ["public", "graphql_public", "storage"]
+extra_search_path = ["public", "extensions"]
+
+[db]
+major_version = 15
+
+[studio]
+enabled = true

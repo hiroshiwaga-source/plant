@@ -2,51 +2,45 @@
 
 ## 概要
 
-**plant** は植物の世話・記録を行うクライアントサイドの Web アプリです。フレームワークに依存せず、ブラウザだけで動作することを前提とします。
+**plant** は植物の登録・世話記録・写真・AI による状態の可能性提示（決めつけない）を扱うモバイルアプリです。**セキュリティとプライバシーを最優先**し、クライアントに AI 系 API キーや `service_role` を置かない方針です。
 
 ## 技術スタック
 
-- **HTML** — マークアップ、セマンティックな構造
-- **CSS** — レイアウトと見た目（必要に応じて CSS 変数・メディアクエリ）
-- **JavaScript（バニラ）** — ロジック、DOM 操作、（将来の）`localStorage` 等との連携
+- **Expo（React Native）** + **TypeScript**
+- **Supabase**（Auth / Postgres + RLS / Storage / Edge Functions）
+- **サーバー側のみ**で LLM / 植物識別 API 等を呼ぶ（キーは Edge のシークレットのみ）
 
-ビルドツールや TypeScript は現時点では使用しない想定。追加する場合はこのファイルを更新すること。
+## 重要ドキュメント
 
-## 推奨ディレクトリ構成（目安）
+- [SECURITY.md](./SECURITY.md) — シークレット・ログ方針
+- [PRIVACY.md](./PRIVACY.md)
+- [THREAT_MODEL.md](./THREAT_MODEL.md)
+- [DATA_FLOW.md](./DATA_FLOW.md)
+- [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) — スキーマ・RLS・Storage（実装は `supabase/migrations/` が正）
 
-プロジェクトはまだ空のため、成長に合わせて次のような分割を推奨する。
+## ディレクトリ（目安）
 
 ```
 plant/
-├── index.html          # エントリ
-├── css/
-│   └── styles.css      # グローバル・コンポーネント単位のスタイル
-├── js/
-│   ├── app.js          # エントリ・初期化
-│   └── ...             # 機能ごとのモジュール（必要なら）
-└── assets/             # 画像・アイコン等
+├── App.tsx                 # エントリ UI（拡張予定）
+├── src/
+│   ├── lib/supabase.ts     # クライアント（anon + ユーザセッションのみ）
+│   └── types/database.ts   # DB 型（手動同期）
+├── supabase/
+│   ├── migrations/
+│   └── functions/          # Edge Functions（AI・おすすめ世話）
+├── README.md
+└── .env.example            # 実シークレットはコミットしない
 ```
 
-ES Modules（`<script type="module">`）でファイルを分割してもよい。
+## 絶対にやらないこと
 
-## 開発時の注意
+- `EXPO_PUBLIC_*` にシークレットを入れる
+- モバイルに `service_role` や OpenAI / Anthropic / Plant.id 等のキーを埋め込む
+- 本番ログに JWT・署名付き URL・画像バイナリ・生プロンプトを残す
 
-- **ローカルでの開き方**: `file://` では CORS やモジュールの挙動が変わることがある。`python3 -m http.server` や `npx serve` などで簡易 HTTP サーバーを立てて確認することを推奨する。
-- **アクセシビリティ**: ボタン・リンクには適切なラベル、`img` には `alt` を付与する。
-- **データ永続化**: ブラウザ保存を使う場合は `localStorage` / `IndexedDB` を想定。機密情報はクライアントに置かない。
+## エージェント向け
 
-## コーディング方針
-
-- 既存のインデント・命名・コメントのスタイルに合わせる。大規模なリファクタは依頼がない限り行わない。
-- 植物データ（名前、 watering 間隔、最後の世話日など）は、後からモデル化しやすいようオブジェクトの形を揃える。
-- UI はモバイルでも使いやすいよう、タッチターゲットと viewport を意識する。
-
-## このリポジトリで Claude に期待すること
-
-- 新機能は HTML/CSS/JS のみで完結させ、不要な依存関係を増やさない。
-- ユーザー向け文言は日本語で統一する（エラーメッセージやボタンラベルを含む）。
-- 変更後、該当画面の動作を説明し、手動で確認すべき点があれば簡潔に列挙する。
-
-## 更新履歴
-
-- 初版: プロジェクト作成時（ plant / 植物管理 / HTML・CSS・JavaScript ）
+- 変更は依頼範囲に留め、RLS / Storage ポリシーを緩めない。
+- 新テーブルは `user_id` + `auth.uid()` ポリシーを必須とする。
+- ユーザー向け文言（日本語）と AI 出力は「可能性」の表現を維持する。
