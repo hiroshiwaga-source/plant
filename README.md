@@ -6,10 +6,22 @@
 
 ```bash
 cp .env.example .env
-# .env に EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_ANON_KEY を設定（anon のみ。service_role は入れない）
+# .env には EXPO_PUBLIC_SUPABASE_URL と EXPO_PUBLIC_SUPABASE_ANON_KEY のみ推奨
+# （Expo が .env を読み込むため、service_role を同じファイルに置かない方が安全です）
 
 npm install
 npx expo start
+# babel.config.js を追加・変更したあとは一度: npx expo start --clear
+```
+
+### 結合テスト用のシークレット（任意）
+
+`SUPABASE_SERVICE_ROLE_KEY` は **`.env.test.local`** にだけ書く（Git 対象外）。`npm run test:integration` は `.env` のあと `.env.test.local` を読みます。中身の例:
+
+```bash
+SUPABASE_URL=https://xxxx.supabase.co
+SUPABASE_ANON_KEY=sb_publishable_...
+SUPABASE_SERVICE_ROLE_KEY=（Legacy の service_role JWT）
 ```
 
 ## Supabase
@@ -31,6 +43,6 @@ npm test
 npm run test:integration
 ```
 
-`signUp` が **email rate limit** になる場合は、`.env` に **`SUPABASE_SERVICE_ROLE_KEY`** を足す（ダッシュボード → Settings → API の **service_role**。**Expo には絶対に入れない**）。テストが Admin API でユーザーを作り、終了時に削除します。
+`signUp` が **email rate limit** になる場合は、**`.env.test.local`** に **`SUPABASE_SERVICE_ROLE_KEY`** を足す（ダッシュボード → Legacy **service_role**）。テストが Admin API でユーザーを作り、終了時に削除します。同じキーを `.env` に置くと Expo 起動時に Metro プロセスへ載るため避けてください。
 
 結合テストは `SUPABASE_URL` / `SUPABASE_ANON_KEY` が無い場合スキップされます。

@@ -1,8 +1,9 @@
 import { config } from "dotenv";
 import { defineConfig } from "vitest/config";
 
-// Allow .env to override empty placeholders some shells/IDEs inject for sensitive keys.
-config({ override: true });
+// Load .env then optional .env.test.local (gitignored) so Expo-only .env need not contain service_role.
+config({ path: ".env", override: true });
+config({ path: ".env.test.local", override: true });
 
 export default defineConfig({
   test: {
