@@ -27,8 +27,10 @@ npx expo start
 
 ```bash
 npm test
-# RLS の実 DB 結合テスト（メール確認不要な開発プロジェクト or ローカル Supabase 向け）
-SUPABASE_URL=... SUPABASE_ANON_KEY=... npm run test:integration
+# RLS 結合テスト（.env に SUPABASE_URL / SUPABASE_ANON_KEY）
+npm run test:integration
 ```
 
-結合テストは環境変数が無い場合スキップされます。
+`signUp` が **email rate limit** になる場合は、`.env` に **`SUPABASE_SERVICE_ROLE_KEY`** を足す（ダッシュボード → Settings → API の **service_role**。**Expo には絶対に入れない**）。テストが Admin API でユーザーを作り、終了時に削除します。
+
+結合テストは `SUPABASE_URL` / `SUPABASE_ANON_KEY` が無い場合スキップされます。
