@@ -30,6 +30,19 @@ npx expo start
 
 メールでの **ログイン／登録を短時間に何度も**試すと、Supabase 側で **レート制限**がかかります。しばらく待つか、ダッシュボード **Authentication** の設定（メール確認の有無など）を確認してください。
 
+### メール確認リンクで「サイトにアクセスできない」場合
+
+スマホのメールアプリから開くと、確認後の **リダイレクト先**（Supabase の **Site URL** や `emailRedirectTo`）が **`localhost` や PC 内だけの URL** だと、端末側で到達できずエラーになります。
+
+1. **Supabase Dashboard** → **Authentication** → **URL Configuration**
+   - **Site URL** を、スマホのブラウザから開ける **`https://...` の公開 URL** にする（`localhost` のままにしない）。
+   - **Redirect URLs** に、次のいずれかを追加する（複数可）。
+     - アプリのディープリンク: `plant://auth/callback`（本リポジトリの `app.json` の `scheme` に合わせています）。
+     - 開発中は Expo が返す URL も必要なことがあります。未設定なら `getAuthEmailRedirectTo()` と同じ文字列を一度ログに出すか、README の `.env.example` の **`EXPO_PUBLIC_AUTH_EMAIL_REDIRECT_URL`** で **静的な成功ページ**（GitHub Pages / Vercel など）を指定すると確実です。その URL も **Redirect URLs** に含めてください。
+2. アプリは `signUp` 時に **`emailRedirectTo`** を送るようになっています。メール内のリンクを踏んだあと **アプリに戻る**と、トークンを読み取ってログイン状態にします（`App.tsx` の `Linking` リスナー）。
+
+変更後は **Expo を再起動**し、必要なら **新規に確認メールを送り直す**と反映されます。
+
 ### 結合テスト用のシークレット（任意）
 
 `SUPABASE_SERVICE_ROLE_KEY` は **`.env.test.local`** にだけ書く（Git 対象外）。`npm run test:integration` は `.env` のあと `.env.test.local` を読みます。中身の例:

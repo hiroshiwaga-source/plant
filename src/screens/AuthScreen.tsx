@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import type { AuthError } from "@supabase/supabase-js";
+import { getAuthEmailRedirectTo } from "../lib/authRedirect";
 import { supabase } from "../lib/supabase";
 import { palette, radius } from "../theme/gris";
 
@@ -112,6 +113,9 @@ export function AuthScreen() {
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
+      options: {
+        emailRedirectTo: getAuthEmailRedirectTo(),
+      },
     });
     setLoading(false);
     if (error) {
@@ -121,6 +125,12 @@ export function AuthScreen() {
     if (data.session) {
       setBanner(null);
       return;
+    }
+    if (typeof __DEV__ !== "undefined" && __DEV__) {
+      console.log(
+        "[plant] メール確認後のリダイレクト先（Supabase の Redirect URLs に未登録だとリンクが失敗します）:",
+        getAuthEmailRedirectTo(),
+      );
     }
     setBanner({
       text: "確認用メールを送信しました。届いたリンクを開いてから「ログイン」してください。",

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import * as Linking from "expo-linking";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import {
   DefaultTheme,
   NavigationContainer,
@@ -8,6 +9,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import type { Session } from "@supabase/supabase-js";
+import { consumeAuthSessionFromUrl } from "./src/lib/authRedirect";
 import { supabase } from "./src/lib/supabase";
 import { MainNavigator } from "./src/navigation/MainNavigator";
 import { AuthScreen } from "./src/screens/AuthScreen";
@@ -52,6 +54,29 @@ export default function App() {
     return () => {
       subscription.unsubscribe();
     };
+  }, [configured]);
+
+  useEffect(() => {
+    if (!configured) return;
+    async function handleUrl(url: string | null) {
+      if (!url) return;
+      const { consumed, errorMessage } = await consumeAuthSessionFromUrl(supabase, url);
+      if (!consumed) return;
+      if (errorMessage) {
+        Alert.alert("認証", errorMessage);
+        return;
+      }
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+    }
+    void (async () => {
+      const initial = await Linking.getInitialURL();
+      await handleUrl(initial);
+    })();
+    const sub = Linking.addEventListener("url", ({ url }) => {
+      void handleUrl(url);
+    });
+    return () => sub.remove();
   }, [configured]);
 
   if (!configured) {
