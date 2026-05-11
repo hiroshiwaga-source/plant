@@ -1,24 +1,43 @@
 import * as ImagePicker from "expo-image-picker";
+import { Platform } from "react-native";
 import { supabase } from "./supabase";
 
 export type UploadPlantPhotoResult =
   | { ok: true; photoId: string }
   | { ok: false; error: string; cancelled?: boolean };
 
+function mediaLibraryAllowed(
+  res: ImagePicker.MediaLibraryPermissionResponse,
+): boolean {
+  if (res.granted) return true;
+  // iOS 14+ 「選択した写真のみ」
+  if (res.accessPrivileges === "limited") return true;
+  return false;
+}
+
 /**
  * Inserts `plant_photos` then uploads to Storage (`plant-photos`), per DATABASE_SCHEMA order.
+ *
+ * `allowsEditing: false` で iOS は PHPicker を使い、フルライブラリ許可が不要な場合があります。
+ * （`allowsEditing: true` は旧 UIImagePicker になり、許可が必須になりやすい。）
  */
 export async function pickAndUploadPlantPhoto(plantId: string): Promise<UploadPlantPhotoResult> {
-  const libPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!libPerm.granted) {
-    return { ok: false, error: "写真ライブラリへのアクセスが許可されていません。" };
+  // Android はギャラリー読み取りの明示許可が必要なことが多い。
+  if (Platform.OS === "android") {
+    const libPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!mediaLibraryAllowed(libPerm)) {
+      return {
+        ok: false,
+        error:
+          "写真ライブラリへのアクセスが許可されていません。設定アプリでこのアプリへの写真の許可をオンにしてください。",
+      };
+    }
   }
 
   const picked = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ["images"],
-    allowsEditing: true,
-    aspect: [4, 3],
-    quality: 0.82,
+    allowsEditing: false,
+    quality: 0.85,
   });
 
   if (picked.canceled || !picked.assets?.[0]) {

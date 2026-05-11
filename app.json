@@ -14,7 +14,10 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "植物の写真を選び、記録とAI診断に使います。"
+      }
     },
     "android": {
       "adaptiveIcon": {
