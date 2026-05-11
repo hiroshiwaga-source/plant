@@ -1,16 +1,37 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import {
+  DefaultTheme,
+  NavigationContainer,
+  type Theme,
+} from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./src/lib/supabase";
 import { MainNavigator } from "./src/navigation/MainNavigator";
 import { AuthScreen } from "./src/screens/AuthScreen";
+import { palette } from "./src/theme/gris";
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [configured, setConfigured] = useState(false);
+
+  const navigationTheme = useMemo<Theme>(
+    () => ({
+      ...DefaultTheme,
+      colors: {
+        ...DefaultTheme.colors,
+        primary: palette.accent,
+        background: palette.canvas,
+        card: palette.surfaceElevated,
+        text: palette.ink,
+        border: palette.mist,
+        notification: palette.rose,
+      },
+    }),
+    [],
+  );
 
   useEffect(() => {
     const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -42,7 +63,7 @@ export default function App() {
           EXPO_PUBLIC_SUPABASE_ANON_KEY を設定してから、Expo
           を再起動してください。
         </Text>
-        <StatusBar style="auto" />
+        <StatusBar style="dark" />
       </View>
     );
   }
@@ -57,12 +78,12 @@ export default function App() {
             一般の観葉植物まで。世話を記録します。
           </Text>
           <AuthScreen />
-          <StatusBar style="auto" />
+          <StatusBar style="dark" />
         </View>
       ) : (
-        <NavigationContainer>
+        <NavigationContainer theme={navigationTheme}>
           <MainNavigator />
-          <StatusBar style="auto" />
+          <StatusBar style="dark" />
         </NavigationContainer>
       )}
     </SafeAreaProvider>
@@ -72,35 +93,40 @@ export default function App() {
 const styles = StyleSheet.create({
   configRoot: {
     flex: 1,
-    backgroundColor: "#fff",
-    padding: 24,
+    backgroundColor: palette.canvas,
+    padding: 28,
     paddingTop: 56,
     justifyContent: "center",
   },
   authWrap: {
     flex: 1,
-    backgroundColor: "#fff",
-    paddingHorizontal: 24,
+    backgroundColor: palette.canvas,
+    paddingHorizontal: 28,
     paddingTop: 56,
     alignItems: "center",
   },
   title: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#1b5e20",
-    marginBottom: 4,
+    fontSize: 32,
+    fontWeight: "300",
+    letterSpacing: 10,
+    color: palette.ink,
+    marginBottom: 12,
+    textTransform: "lowercase",
   },
   sub: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 8,
+    fontSize: 15,
+    color: palette.inkMuted,
+    marginBottom: 20,
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 24,
+    fontWeight: "400",
+    maxWidth: 320,
   },
   muted: {
-    color: "#555",
+    color: palette.inkMuted,
     textAlign: "center",
     marginTop: 16,
-    lineHeight: 22,
+    lineHeight: 24,
+    fontSize: 15,
   },
 });

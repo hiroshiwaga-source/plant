@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import type { AuthError } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import { palette, radius } from "../theme/gris";
 
 const MIN_PASSWORD_LEN = 6;
 
@@ -141,7 +142,7 @@ export function AuthScreen() {
         value={email}
         onChangeText={setEmail}
         placeholder="you@example.com"
-        placeholderTextColor="#999"
+        placeholderTextColor={palette.inkFaint}
         accessibilityLabel="メールアドレス"
       />
       <Text style={styles.label}>パスワード</Text>
@@ -152,7 +153,7 @@ export function AuthScreen() {
         value={password}
         onChangeText={setPassword}
         placeholder={`${MIN_PASSWORD_LEN}文字以上`}
-        placeholderTextColor="#999"
+        placeholderTextColor={palette.inkFaint}
         accessibilityLabel="パスワード"
       />
       {banner ? (
@@ -172,7 +173,7 @@ export function AuthScreen() {
         accessibilityRole="button"
       >
         {loading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={palette.surfaceElevated} />
         ) : (
           <Text style={styles.buttonText}>ログイン</Text>
         )}
@@ -194,61 +195,74 @@ const styles = StyleSheet.create({
   wrap: {
     width: "100%",
     maxWidth: 400,
-    marginTop: 24,
+    marginTop: 8,
   },
   label: {
-    fontSize: 14,
-    color: "#333",
-    marginBottom: 6,
+    fontSize: 13,
+    color: palette.inkMuted,
+    marginBottom: 8,
     fontWeight: "500",
+    letterSpacing: 0.3,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderColor: palette.mist,
+    borderRadius: radius.md,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 16,
-    marginBottom: 16,
-    backgroundColor: "#fafafa",
+    marginBottom: 18,
+    backgroundColor: palette.surfaceElevated,
+    color: palette.ink,
   },
   bannerInfo: {
-    color: "#1565c0",
+    color: palette.haze,
     fontSize: 14,
-    marginBottom: 16,
-    lineHeight: 20,
+    marginBottom: 18,
+    lineHeight: 22,
+    backgroundColor: palette.hazeBg,
+    padding: 14,
+    borderRadius: radius.sm,
+    overflow: "hidden",
   },
   bannerError: {
-    color: "#c62828",
+    color: palette.rose,
     fontSize: 14,
-    marginBottom: 16,
-    lineHeight: 20,
+    marginBottom: 18,
+    lineHeight: 22,
+    backgroundColor: palette.roseBg,
+    padding: 14,
+    borderRadius: radius.sm,
+    overflow: "hidden",
   },
   button: {
-    backgroundColor: "#2e7d32",
-    borderRadius: 8,
-    paddingVertical: 14,
+    backgroundColor: palette.accent,
+    borderRadius: radius.md,
+    paddingVertical: 16,
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 14,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    opacity: 0.55,
   },
   buttonText: {
-    color: "#fff",
+    color: palette.surfaceElevated,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "500",
+    letterSpacing: 1,
   },
   buttonSecondary: {
     borderWidth: 1,
-    borderColor: "#2e7d32",
-    borderRadius: 8,
-    paddingVertical: 14,
+    borderColor: palette.mist,
+    borderRadius: radius.md,
+    paddingVertical: 16,
     alignItems: "center",
+    backgroundColor: palette.surfaceElevated,
   },
   buttonSecondaryText: {
-    color: "#2e7d32",
+    color: palette.accentInk,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "500",
+    letterSpacing: 0.5,
   },
 });

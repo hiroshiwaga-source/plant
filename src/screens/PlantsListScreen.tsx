@@ -13,6 +13,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { supabase } from "../lib/supabase";
 import type { MainStackParamList } from "../navigation/types";
+import { palette, radius, shadow } from "../theme/gris";
 import type { Database } from "../types/database";
 
 type Plant = Database["public"]["Tables"]["plants"]["Row"];
@@ -73,7 +74,7 @@ export function PlantsListScreen() {
   if (loading && plants.length === 0) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#2e7d32" />
+        <ActivityIndicator size="large" color={palette.accent} />
       </View>
     );
   }
@@ -85,7 +86,12 @@ export function PlantsListScreen() {
         data={plants}
         keyExtractor={(item) => item.id}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void onRefresh()}
+            tintColor={palette.accent}
+            colors={[palette.accent]}
+          />
         }
         contentContainerStyle={
           plants.length === 0 ? styles.emptyList : styles.listContent
@@ -139,70 +145,77 @@ export function PlantsListScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#f8faf8",
+    backgroundColor: palette.canvas,
   },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f8faf8",
+    backgroundColor: palette.canvas,
   },
   headerBtn: {
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   headerBtnText: {
-    color: "#1b5e20",
+    color: palette.accent,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "500",
+    letterSpacing: 0.5,
   },
   error: {
-    color: "#c62828",
+    color: palette.rose,
     padding: 16,
     textAlign: "center",
+    fontSize: 15,
   },
   listContent: {
-    padding: 16,
-    paddingBottom: 24,
+    padding: 18,
+    paddingBottom: 28,
   },
   emptyList: {
     flexGrow: 1,
-    padding: 24,
+    padding: 28,
     justifyContent: "center",
   },
   emptyText: {
-    color: "#666",
+    color: palette.inkMuted,
     textAlign: "center",
-    lineHeight: 22,
+    lineHeight: 24,
+    fontSize: 15,
   },
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: palette.surfaceElevated,
+    borderRadius: radius.lg,
+    padding: 18,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: "#e0e8e0",
+    borderColor: palette.mistLight,
+    ...shadow.card,
   },
   cardTitle: {
     fontSize: 17,
-    fontWeight: "600",
-    color: "#1b3d1b",
+    fontWeight: "500",
+    color: palette.ink,
+    letterSpacing: 0.2,
   },
   cardSub: {
-    marginTop: 4,
+    marginTop: 6,
     fontSize: 14,
-    color: "#558b2f",
+    color: palette.accentInk,
+    opacity: 0.85,
   },
   logout: {
-    marginTop: 24,
-    marginBottom: 32,
-    paddingVertical: 16,
+    marginTop: 28,
+    marginBottom: 36,
+    paddingVertical: 18,
     alignItems: "center",
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#ddd",
+    borderTopColor: palette.mist,
   },
   logoutText: {
-    color: "#666",
-    fontSize: 15,
+    color: palette.inkFaint,
+    fontSize: 14,
+    letterSpacing: 0.5,
   },
 });

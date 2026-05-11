@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { PlantDetailScreen } from "../screens/PlantDetailScreen";
 import { PlantFormScreen } from "../screens/PlantFormScreen";
 import { PlantsListScreen } from "../screens/PlantsListScreen";
+import { palette } from "../theme/gris";
 import type { MainStackParamList } from "./types";
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
@@ -10,9 +11,17 @@ export function MainNavigator() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerTintColor: "#1b5e20",
-        headerTitleStyle: { fontWeight: "600" },
-        contentStyle: { backgroundColor: "#f8faf8" },
+        headerTintColor: palette.accent,
+        headerTitleStyle: {
+          fontWeight: "500",
+          fontSize: 17,
+          color: palette.ink,
+        },
+        headerStyle: {
+          backgroundColor: palette.surfaceElevated,
+        },
+        headerShadowVisible: false,
+        contentStyle: { backgroundColor: palette.canvas },
       }}
     >
       <Stack.Screen
@@ -23,13 +32,17 @@ export function MainNavigator() {
       <Stack.Screen
         name="PlantDetail"
         component={PlantDetailScreen}
-        options={{ title: "植物の詳細" }}
+        options={{ title: "詳細" }}
       />
       <Stack.Screen
         name="PlantForm"
         component={PlantFormScreen}
         options={({ route }) => ({
-          title: route.params?.plantId ? "植物を編集" : "植物を追加",
+          title: route.params?.plantId ? "編集" : "追加",
+          presentation: "modal",
+          headerStyle: {
+            backgroundColor: palette.surface,
+          },
         })}
       />
     </Stack.Navigator>

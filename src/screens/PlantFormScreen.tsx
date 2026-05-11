@@ -13,6 +13,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
 import { supabase } from "../lib/supabase";
 import type { MainStackParamList } from "../navigation/types";
+import { palette, radius } from "../theme/gris";
 
 type Nav = NativeStackNavigationProp<MainStackParamList, "PlantForm">;
 type PlantFormRoute = RouteProp<MainStackParamList, "PlantForm">;
@@ -97,7 +98,7 @@ export function PlantFormScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#2e7d32" />
+        <ActivityIndicator size="large" color={palette.accent} />
       </View>
     );
   }
@@ -115,7 +116,7 @@ export function PlantFormScreen() {
         value={displayName}
         onChangeText={setDisplayName}
         placeholder="例: 五葉松（盆栽）、ビカクシダ、リビングのモンステラ"
-        placeholderTextColor="#999"
+        placeholderTextColor={palette.inkFaint}
       />
       <Text style={styles.label}>品種・学名（任意）</Text>
       <TextInput
@@ -123,7 +124,7 @@ export function PlantFormScreen() {
         value={speciesName}
         onChangeText={setSpeciesName}
         placeholder="例: Pinus parviflora、Platycerium、Monstera deliciosa"
-        placeholderTextColor="#999"
+        placeholderTextColor={palette.inkFaint}
       />
       <Text style={styles.label}>メモ（任意）</Text>
       <TextInput
@@ -131,7 +132,7 @@ export function PlantFormScreen() {
         value={notes}
         onChangeText={setNotes}
         placeholder="置き場所、用土、水やりの好み、忌避する肥料など"
-        placeholderTextColor="#999"
+        placeholderTextColor={palette.inkFaint}
         multiline
       />
       <Pressable
@@ -142,7 +143,7 @@ export function PlantFormScreen() {
         accessibilityRole="button"
       >
         {saving ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={palette.surfaceElevated} />
         ) : (
           <Text style={styles.saveText}>保存</Text>
         )}
@@ -154,55 +155,59 @@ export function PlantFormScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#f8faf8",
+    backgroundColor: palette.canvas,
   },
   inner: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: 22,
+    paddingBottom: 44,
   },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f8faf8",
+    backgroundColor: palette.canvas,
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "500",
-    color: "#333",
-    marginBottom: 6,
+    color: palette.inkMuted,
+    marginBottom: 8,
+    letterSpacing: 0.3,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderColor: palette.mist,
+    borderRadius: radius.md,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 16,
-    marginBottom: 18,
-    backgroundColor: "#fff",
+    marginBottom: 20,
+    backgroundColor: palette.surfaceElevated,
+    color: palette.ink,
   },
   notes: {
-    minHeight: 100,
+    minHeight: 110,
     textAlignVertical: "top",
   },
   error: {
-    color: "#c62828",
-    marginBottom: 12,
+    color: palette.rose,
+    marginBottom: 14,
+    fontSize: 15,
   },
   save: {
-    backgroundColor: "#2e7d32",
-    borderRadius: 8,
-    paddingVertical: 14,
+    backgroundColor: palette.accent,
+    borderRadius: radius.md,
+    paddingVertical: 16,
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 12,
   },
   saveDisabled: {
-    opacity: 0.6,
+    opacity: 0.55,
   },
   saveText: {
-    color: "#fff",
+    color: palette.surfaceElevated,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "500",
+    letterSpacing: 1,
   },
 });

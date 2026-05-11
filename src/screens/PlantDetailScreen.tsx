@@ -16,6 +16,7 @@ import type { RouteProp } from "@react-navigation/native";
 import { formatCareWhen } from "../lib/formatCareWhen";
 import { supabase } from "../lib/supabase";
 import type { MainStackParamList } from "../navigation/types";
+import { palette, radius, shadow } from "../theme/gris";
 import type { CareLogType, Database } from "../types/database";
 
 type Plant = Database["public"]["Tables"]["plants"]["Row"];
@@ -154,7 +155,7 @@ export function PlantDetailScreen() {
   if (loading && !plant) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#2e7d32" />
+        <ActivityIndicator size="large" color={palette.accent} />
       </View>
     );
   }
@@ -242,7 +243,7 @@ export function PlantDetailScreen() {
               value={modalNote}
               onChangeText={setModalNote}
               placeholder="例: 花宝2倍希釈、強剪定、底面給水"
-              placeholderTextColor="#999"
+              placeholderTextColor={palette.inkFaint}
               multiline
               accessibilityLabel="この世話のメモ"
             />
@@ -264,7 +265,7 @@ export function PlantDetailScreen() {
                 accessibilityRole="button"
               >
                 {saving ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color={palette.surfaceElevated} />
                 ) : (
                   <Text style={styles.modalSaveText}>記録する</Text>
                 )}
@@ -280,108 +281,115 @@ export function PlantDetailScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#f8faf8",
+    backgroundColor: palette.canvas,
   },
   inner: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: 22,
+    paddingBottom: 44,
   },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f8faf8",
-    padding: 24,
+    backgroundColor: palette.canvas,
+    padding: 28,
   },
   headerBtn: {
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   headerBtnText: {
-    color: "#1b5e20",
+    color: palette.accent,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "500",
   },
   error: {
-    color: "#c62828",
-    marginBottom: 8,
+    color: palette.rose,
+    marginBottom: 10,
     textAlign: "center",
+    fontSize: 15,
   },
   hero: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
+    backgroundColor: palette.surfaceElevated,
+    borderRadius: radius.lg,
+    padding: 20,
+    marginBottom: 22,
     borderWidth: 1,
-    borderColor: "#e0e8e0",
+    borderColor: palette.mistLight,
+    ...shadow.card,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#1b3d1b",
+    fontSize: 21,
+    fontWeight: "500",
+    color: palette.ink,
+    letterSpacing: 0.3,
   },
   species: {
-    marginTop: 6,
+    marginTop: 8,
     fontSize: 15,
-    color: "#558b2f",
+    color: palette.accentInk,
+    opacity: 0.9,
   },
   notes: {
-    marginTop: 10,
+    marginTop: 12,
     fontSize: 14,
-    color: "#555",
-    lineHeight: 20,
+    color: palette.inkMuted,
+    lineHeight: 22,
   },
   section: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#333",
+    fontSize: 14,
+    fontWeight: "500",
+    color: palette.inkMuted,
     marginBottom: 6,
+    letterSpacing: 0.5,
   },
   hint: {
     fontSize: 13,
-    color: "#666",
-    marginBottom: 10,
-    lineHeight: 18,
+    color: palette.inkFaint,
+    marginBottom: 12,
+    lineHeight: 20,
   },
   actions: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
-    marginBottom: 24,
+    marginBottom: 28,
   },
   actionBtn: {
-    backgroundColor: "#e8f5e9",
-    paddingVertical: 12,
+    backgroundColor: palette.surface,
+    paddingVertical: 13,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: "#a5d6a7",
+    borderColor: palette.accentMuted,
     minWidth: "22%",
     alignItems: "center",
   },
   actionBtnBusy: {
-    opacity: 0.7,
+    opacity: 0.65,
   },
   actionBtnText: {
-    color: "#1b5e20",
-    fontWeight: "600",
+    color: palette.accentInk,
+    fontWeight: "500",
     fontSize: 14,
+    letterSpacing: 0.3,
   },
   emptyLogs: {
-    color: "#888",
-    marginBottom: 16,
+    color: palette.inkFaint,
+    marginBottom: 18,
+    fontSize: 14,
   },
   logRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     gap: 8,
-    backgroundColor: "#fff",
-    padding: 14,
-    borderRadius: 8,
-    marginBottom: 8,
+    backgroundColor: palette.surfaceElevated,
+    padding: 16,
+    borderRadius: radius.md,
+    marginBottom: 10,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: palette.mistLight,
   },
   logMain: {
     flex: 1,
@@ -390,65 +398,71 @@ const styles = StyleSheet.create({
   logType: {
     fontSize: 15,
     fontWeight: "500",
-    color: "#333",
+    color: palette.ink,
   },
   logNotes: {
-    marginTop: 4,
+    marginTop: 6,
     fontSize: 13,
-    color: "#555",
-    lineHeight: 18,
+    color: palette.inkMuted,
+    lineHeight: 19,
   },
   logDate: {
-    fontSize: 13,
-    color: "#777",
+    fontSize: 12,
+    color: palette.inkFaint,
     flexShrink: 0,
   },
   deleteBtn: {
-    marginTop: 28,
-    paddingVertical: 14,
+    marginTop: 30,
+    paddingVertical: 15,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#ffcdd2",
-    borderRadius: 8,
-    backgroundColor: "#fff",
+    borderColor: palette.mist,
+    borderRadius: radius.md,
+    backgroundColor: palette.roseBg,
   },
   deleteBtnText: {
-    color: "#c62828",
-    fontWeight: "600",
-    fontSize: 15,
+    color: palette.rose,
+    fontWeight: "500",
+    fontSize: 14,
+    letterSpacing: 0.4,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "rgba(58, 54, 51, 0.38)",
     justifyContent: "center",
     padding: 24,
   },
   modalCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
+    backgroundColor: palette.surfaceElevated,
+    borderRadius: radius.lg,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: palette.mistLight,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: "700",
-    color: "#1b3d1b",
-    marginBottom: 16,
+    fontWeight: "500",
+    color: palette.ink,
+    marginBottom: 18,
+    letterSpacing: 0.3,
   },
   modalLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "500",
-    marginBottom: 6,
-    color: "#333",
+    marginBottom: 8,
+    color: palette.inkMuted,
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    minHeight: 88,
+    borderColor: palette.mist,
+    borderRadius: radius.md,
+    padding: 14,
+    minHeight: 92,
     textAlignVertical: "top",
     fontSize: 15,
-    marginBottom: 20,
+    marginBottom: 22,
+    backgroundColor: palette.surface,
+    color: palette.ink,
   },
   modalActions: {
     flexDirection: "row",
@@ -460,23 +474,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   modalCancelText: {
-    color: "#666",
-    fontSize: 16,
+    color: palette.inkMuted,
+    fontSize: 15,
   },
   modalSave: {
-    backgroundColor: "#2e7d32",
+    backgroundColor: palette.accent,
     paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    paddingHorizontal: 22,
+    borderRadius: radius.md,
     minWidth: 120,
     alignItems: "center",
   },
   modalSaveDisabled: {
-    opacity: 0.6,
+    opacity: 0.55,
   },
   modalSaveText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
+    color: palette.surfaceElevated,
+    fontSize: 15,
+    fontWeight: "500",
+    letterSpacing: 0.8,
   },
 });
