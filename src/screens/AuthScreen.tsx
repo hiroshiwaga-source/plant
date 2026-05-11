@@ -9,16 +9,82 @@ import {
   TextInput,
   View,
 } from "react-native";
+import type { AuthError } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+
+const MIN_PASSWORD_LEN = 6;
+
+type Banner = { text: string; tone: "info" | "error" };
+
+function mapSignUpError(error: AuthError): Banner {
+  const m = error.message.toLowerCase();
+  if (m.includes("already") || m.includes("registered")) {
+    return {
+      text: "このメールアドレスは既に登録されています。「ログイン」を試してください。",
+      tone: "error",
+    };
+  }
+  if (m.includes("password") && (m.includes("least") || m.includes("short"))) {
+    return {
+      text: `パスワードは${MIN_PASSWORD_LEN}文字以上にしてください。`,
+      tone: "error",
+    };
+  }
+  if (m.includes("rate limit")) {
+    return {
+      text: "試行回数が多すぎます。しばらく待ってから再度お試しください。",
+      tone: "error",
+    };
+  }
+  if (m.includes("invalid") && m.includes("email")) {
+    return {
+      text: "メールアドレスの形式が正しくない可能性があります。",
+      tone: "error",
+    };
+  }
+  if (m.includes("signup") && m.includes("disabled")) {
+    return {
+      text: "現在、新規登録を受け付けていません。管理者に問い合わせてください。",
+      tone: "error",
+    };
+  }
+  return {
+    text: "登録できませんでした。入力内容と通信環境を確認してください。",
+    tone: "error",
+  };
+}
+
+function mapSignInError(_error: AuthError): Banner {
+  return {
+    text: "ログインできませんでした。メール・パスワード、またはメール確認が済んでいるか確認してください。",
+    tone: "error",
+  };
+}
 
 export function AuthScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [banner, setBanner] = useState<Banner | null>(null);
+
+  function validateInputs(): boolean {
+    if (!email.trim()) {
+      setBanner({ text: "メールアドレスを入力してください。", tone: "error" });
+      return false;
+    }
+    if (password.length < MIN_PASSWORD_LEN) {
+      setBanner({
+        text: `パスワードは${MIN_PASSWORD_LEN}文字以上入力してください。`,
+        tone: "error",
+      });
+      return false;
+    }
+    return true;
+  }
 
   async function signIn() {
-    setMessage(null);
+    setBanner(null);
+    if (!validateInputs()) return;
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -26,13 +92,14 @@ export function AuthScreen() {
     });
     setLoading(false);
     if (error) {
-      setMessage("ログインできませんでした。メールとパスワードを確認してください。");
+      setBanner(mapSignInError(error));
       return;
     }
   }
 
   async function signUp() {
-    setMessage(null);
+    setBanner(null);
+    if (!validateInputs()) return;
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
@@ -40,15 +107,17 @@ export function AuthScreen() {
     });
     setLoading(false);
     if (error) {
-      setMessage("登録できませんでした。パスワードの長さや既存アカウントを確認してください。");
+      setBanner(mapSignUpError(error));
       return;
     }
     if (data.session) {
+      setBanner(null);
       return;
     }
-    setMessage(
-      "確認用メールを送信しました。メール内のリンクを開いてから、もう一度ログインしてください。",
-    );
+    setBanner({
+      text: "確認用メールを送信しました。届いたリンクを開いてから「ログイン」してください。",
+      tone: "info",
+    });
   }
 
   return (
@@ -74,10 +143,18 @@ export function AuthScreen() {
         autoComplete="password"
         value={password}
         onChangeText={setPassword}
-        placeholder="6文字以上推奨"
+        placeholder={`${MIN_PASSWORD_LEN}文字以上`}
         placeholderTextColor="#999"
       />
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+      {banner ? (
+        <Text
+          style={
+            banner.tone === "error" ? styles.bannerError : styles.bannerInfo
+          }
+        >
+          {banner.text}
+        </Text>
+      ) : null}
       <Pressable
         style={[styles.button, loading && styles.buttonDisabled]}
         onPress={() => void signIn()}
@@ -122,8 +199,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: "#fafafa",
   },
-  message: {
+  bannerInfo: {
     color: "#1565c0",
+    fontSize: 14,
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  bannerError: {
+    color: "#c62828",
     fontSize: 14,
     marginBottom: 16,
     lineHeight: 20,
