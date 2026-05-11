@@ -14,6 +14,8 @@ npx expo start
 # babel.config.js を追加・変更したあとは一度: npx expo start --clear
 ```
 
+メールでの **ログイン／登録を短時間に何度も**試すと、Supabase 側で **レート制限**がかかります。しばらく待つか、ダッシュボード **Authentication** の設定（メール確認の有無など）を確認してください。
+
 ### 結合テスト用のシークレット（任意）
 
 `SUPABASE_SERVICE_ROLE_KEY` は **`.env.test.local`** にだけ書く（Git 対象外）。`npm run test:integration` は `.env` のあと `.env.test.local` を読みます。中身の例:

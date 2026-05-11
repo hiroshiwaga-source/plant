@@ -16,6 +16,12 @@ const MIN_PASSWORD_LEN = 6;
 
 type Banner = { text: string; tone: "info" | "error" };
 
+const RATE_LIMIT_BANNER: Banner = {
+  text:
+    "Supabase の認証で一時的に制限されています。目安として 30〜60 分ほど空けてから、もう一度「ログイン」か「アカウント登録」を試してください。開発中に何度も試すと出やすくなります。",
+  tone: "error",
+};
+
 function mapSignUpError(error: AuthError): Banner {
   const m = error.message.toLowerCase();
   if (m.includes("already") || m.includes("registered")) {
@@ -31,10 +37,7 @@ function mapSignUpError(error: AuthError): Banner {
     };
   }
   if (m.includes("rate limit")) {
-    return {
-      text: "試行回数が多すぎます。しばらく待ってから再度お試しください。",
-      tone: "error",
-    };
+    return RATE_LIMIT_BANNER;
   }
   if (m.includes("invalid") && m.includes("email")) {
     return {
@@ -54,7 +57,11 @@ function mapSignUpError(error: AuthError): Banner {
   };
 }
 
-function mapSignInError(_error: AuthError): Banner {
+function mapSignInError(error: AuthError): Banner {
+  const m = error.message.toLowerCase();
+  if (m.includes("rate limit")) {
+    return RATE_LIMIT_BANNER;
+  }
   return {
     text: "ログインできませんでした。メール・パスワード、またはメール確認が済んでいるか確認してください。",
     tone: "error",
