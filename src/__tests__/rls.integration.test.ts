@@ -31,8 +31,9 @@ describe.skipIf(!run)("RLS: users cannot read other tenants’ data", () => {
 
   beforeAll(async () => {
     const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    emailA = `rls-a-${suffix}@example.test`;
-    emailB = `rls-b-${suffix}@example.test`;
+    // Avoid TLDs Auth may reject (e.g. .test); use a conventional test domain.
+    emailA = `plant-rls-a-${suffix}@example.com`;
+    emailB = `plant-rls-b-${suffix}@example.com`;
     clientA = client();
     clientB = client();
 
