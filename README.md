@@ -43,6 +43,35 @@ npx expo start
 
 変更後は **Expo を再起動**し、必要なら **新規に確認メールを送り直す**と反映されます。
 
+### メール確認用の静的ページ（このリポジトリの `docs/`）
+
+アプリ用ドメインがまだないときは、リポジトリ同梱の **`docs/index.html`**（「確認できました」1 枚）を **GitHub Pages** または **Vercel** でホストするとよいです。
+
+**GitHub Pages（無料・手順が短い）**
+
+1. このリポジトリを GitHub に push する（`docs/index.html` が含まれていること）。
+2. GitHub 上で **Settings** → **Pages** を開く。
+3. **Build and deployment** で Source を **Deploy from a branch**、Branch を **`main`** / フォルダ **`/docs`** に設定して Save。
+4. 数分後、公開 URL は次の形になります（`USERNAME` と `REPO` は差し替え）。
+
+   `https://USERNAME.github.io/REPO/`
+
+   例: [hiroshiwaga-source/plant](https://github.com/hiroshiwaga-source/plant) なら  
+   `https://hiroshiwaga-source.github.io/plant/`
+
+5. **Supabase** → **Authentication** → **URL Configuration**
+   - **Site URL** に上記の `https://.../`（末尾 `/` の有無はどちらでも可なことが多い）
+   - **Redirect URLs** に同じ URL を追加（必要なら `https://.../index.html` も）
+6. `.env` に次を追加し、Expo を再起動する。
+
+   `EXPO_PUBLIC_AUTH_EMAIL_REDIRECT_URL=https://USERNAME.github.io/REPO/`
+
+**Vercel**
+
+1. [Vercel](https://vercel.com) で **Import** し、この Git リポジトリを選ぶ。
+2. **Root Directory** を **`docs`** に設定する（`docs` 内の `index.html` だけを静的配信するため）。
+3. デプロイ後に表示される **`https://xxxx.vercel.app`** を、Supabase の **Site URL / Redirect URLs** と **`EXPO_PUBLIC_AUTH_EMAIL_REDIRECT_URL`** にそのまま使う。
+
 ### 結合テスト用のシークレット（任意）
 
 `SUPABASE_SERVICE_ROLE_KEY` は **`.env.test.local`** にだけ書く（Git 対象外）。`npm run test:integration` は `.env` のあと `.env.test.local` を読みます。中身の例:
