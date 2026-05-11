@@ -15,7 +15,10 @@ import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/nativ
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
 import { formatCareWhen } from "../lib/formatCareWhen";
-import { pickAndUploadPlantPhoto } from "../lib/pickAndUploadPlantPhoto";
+import {
+  pickAndUploadPlantPhoto,
+  type PlantPhotoSource,
+} from "../lib/pickAndUploadPlantPhoto";
 import { supabase } from "../lib/supabase";
 import { invokeAiDiagnose, invokeCareRecommendations } from "../lib/supabaseEdge";
 import type { MainStackParamList } from "../navigation/types";
@@ -68,7 +71,7 @@ export function PlantDetailScreen() {
   const [photoPreviewUris, setPhotoPreviewUris] = useState<Record<string, string>>({});
   const [diagnoses, setDiagnoses] = useState<PlantDiagnosis[]>([]);
   const [todayCare, setTodayCare] = useState<CareRecommendation | null>(null);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoActionBusy, setPhotoActionBusy] = useState<PlantPhotoSource | null>(null);
   const [aiBusy, setAiBusy] = useState(false);
   const [careBusy, setCareBusy] = useState(false);
 
@@ -222,11 +225,11 @@ export function PlantDetailScreen() {
     navigation.navigate("PlantsList");
   }
 
-  async function addPlantPhoto() {
-    setUploadingPhoto(true);
+  async function addPlantPhoto(source: PlantPhotoSource) {
+    setPhotoActionBusy(source);
     setError(null);
-    const result = await pickAndUploadPlantPhoto(plantId);
-    setUploadingPhoto(false);
+    const result = await pickAndUploadPlantPhoto(plantId, source);
+    setPhotoActionBusy(null);
     if (!result.ok) {
       if (result.cancelled) return;
       setError(result.error);
@@ -300,20 +303,37 @@ export function PlantDetailScreen() {
       </View>
 
       <Text style={styles.section}>写真</Text>
-      <Text style={styles.hint}>アルバムから選ぶとクラウドに保存され、AI診断に使えます。</Text>
-      <Pressable
-        style={[styles.primaryOutlineBtn, uploadingPhoto && styles.actionBtnBusy]}
-        onPress={() => void addPlantPhoto()}
-        disabled={uploadingPhoto || saving}
-        accessibilityLabel="写真を追加"
-        accessibilityRole="button"
-      >
-        {uploadingPhoto ? (
-          <ActivityIndicator color={palette.accentInk} />
-        ) : (
-          <Text style={styles.primaryOutlineBtnText}>写真を追加</Text>
-        )}
-      </Pressable>
+      <Text style={styles.hint}>
+        アルバムから選ぶか、カメラで撮影するとクラウドに保存され、AI診断に使えます。
+      </Text>
+      <View style={styles.rowBtns}>
+        <Pressable
+          style={[styles.secondaryBtn, photoActionBusy && styles.actionBtnBusy]}
+          onPress={() => void addPlantPhoto("library")}
+          disabled={photoActionBusy !== null || saving}
+          accessibilityLabel="アルバムから写真を追加"
+          accessibilityRole="button"
+        >
+          {photoActionBusy === "library" ? (
+            <ActivityIndicator color={palette.accentInk} />
+          ) : (
+            <Text style={styles.secondaryBtnText}>アルバムから</Text>
+          )}
+        </Pressable>
+        <Pressable
+          style={[styles.secondaryBtn, photoActionBusy && styles.actionBtnBusy]}
+          onPress={() => void addPlantPhoto("camera")}
+          disabled={photoActionBusy !== null || saving}
+          accessibilityLabel="カメラで撮影して追加"
+          accessibilityRole="button"
+        >
+          {photoActionBusy === "camera" ? (
+            <ActivityIndicator color={palette.accentInk} />
+          ) : (
+            <Text style={styles.secondaryBtnText}>カメラで撮る</Text>
+          )}
+        </Pressable>
+      </View>
       {photos.length > 0 ? (
         <ScrollView
           horizontal

@@ -16,7 +16,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "植物の写真を選び、記録とAI診断に使います。"
+        "NSPhotoLibraryUsageDescription": "植物の写真を選び、記録とAI診断に使います。",
+        "NSCameraUsageDescription": "植物の状態を記録するためにカメラで撮影します。"
       }
     },
     "android": {
@@ -34,7 +35,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "植物の写真を選び、記録と診断に使います。"
+          "photosPermission": "植物の写真を選び、記録と診断に使います。",
+          "cameraPermission": "植物の状態を記録するためにカメラで撮影します。"
         }
       ]
     ]
