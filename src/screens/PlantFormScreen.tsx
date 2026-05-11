@@ -114,7 +114,7 @@ export function PlantFormScreen() {
         style={styles.input}
         value={displayName}
         onChangeText={setDisplayName}
-        placeholder="例: リビングのモンステラ"
+        placeholder="例: 五葉松（盆栽）、ビカクシダ、リビングのモンステラ"
         placeholderTextColor="#999"
       />
       <Text style={styles.label}>品種・学名（任意）</Text>
@@ -122,7 +122,7 @@ export function PlantFormScreen() {
         style={styles.input}
         value={speciesName}
         onChangeText={setSpeciesName}
-        placeholder="例: Monstera deliciosa"
+        placeholder="例: Pinus parviflora、Platycerium、Monstera deliciosa"
         placeholderTextColor="#999"
       />
       <Text style={styles.label}>メモ（任意）</Text>
@@ -130,7 +130,7 @@ export function PlantFormScreen() {
         style={[styles.input, styles.notes]}
         value={notes}
         onChangeText={setNotes}
-        placeholder="置き場所や好みなど"
+        placeholder="置き場所、用土、水やりの好み、忌避する肥料など"
         placeholderTextColor="#999"
         multiline
       />

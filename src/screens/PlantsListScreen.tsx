@@ -97,7 +97,7 @@ export function PlantsListScreen() {
         }
         ListEmptyComponent={
           <Text style={styles.emptyText}>
-            まだ植物がありません。右上の「追加」から登録してください。
+            まだ植物がありません。盆栽から観葉植物まで、右上の「追加」から登録してください。
           </Text>
         }
         renderItem={({ item }) => (

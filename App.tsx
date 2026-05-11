@@ -52,7 +52,10 @@ export default function App() {
       {!session ? (
         <View style={styles.authWrap}>
           <Text style={styles.title}>plant</Text>
-          <Text style={styles.sub}>植物の世話を記録するアプリ</Text>
+          <Text style={styles.sub}>
+            盆栽やビカクシダなど趣味の植物から、{"\n"}
+            一般の観葉植物まで。世話を記録します。
+          </Text>
           <AuthScreen />
           <StatusBar style="auto" />
         </View>
@@ -91,6 +94,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     marginBottom: 8,
+    textAlign: "center",
+    lineHeight: 20,
   },
   muted: {
     color: "#555",
