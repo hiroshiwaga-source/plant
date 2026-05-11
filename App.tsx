@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { NavigationContainer } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./src/lib/supabase";
+import { MainNavigator } from "./src/navigation/MainNavigator";
 import { AuthScreen } from "./src/screens/AuthScreen";
-import { HomeScreen } from "./src/screens/HomeScreen";
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -31,39 +33,51 @@ export default function App() {
     };
   }, [configured]);
 
-  return (
-    <View style={styles.root}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-      >
+  if (!configured) {
+    return (
+      <View style={styles.configRoot}>
         <Text style={styles.title}>plant</Text>
-        <Text style={styles.sub}>植物の世話を記録するアプリ</Text>
-        {!configured ? (
-          <Text style={styles.muted}>
-            `.env` に EXPO_PUBLIC_SUPABASE_URL と
-            EXPO_PUBLIC_SUPABASE_ANON_KEY を設定してから、Expo
-            を再起動してください。
-          </Text>
-        ) : session ? (
-          <HomeScreen session={session} />
-        ) : (
+        <Text style={styles.muted}>
+          `.env` に EXPO_PUBLIC_SUPABASE_URL と
+          EXPO_PUBLIC_SUPABASE_ANON_KEY を設定してから、Expo
+          を再起動してください。
+        </Text>
+        <StatusBar style="auto" />
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaProvider>
+      {!session ? (
+        <View style={styles.authWrap}>
+          <Text style={styles.title}>plant</Text>
+          <Text style={styles.sub}>植物の世話を記録するアプリ</Text>
           <AuthScreen />
-        )}
-      </ScrollView>
-      <StatusBar style="auto" />
-    </View>
+          <StatusBar style="auto" />
+        </View>
+      ) : (
+        <NavigationContainer>
+          <MainNavigator />
+          <StatusBar style="auto" />
+        </NavigationContainer>
+      )}
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  configRoot: {
     flex: 1,
     backgroundColor: "#fff",
-  },
-  scroll: {
-    flexGrow: 1,
     padding: 24,
+    paddingTop: 56,
+    justifyContent: "center",
+  },
+  authWrap: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingHorizontal: 24,
     paddingTop: 56,
     alignItems: "center",
   },

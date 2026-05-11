@@ -39,6 +39,7 @@ export interface Database {
           species_name?: string | null;
           notes?: string | null;
         };
+        Relationships: [];
       };
       care_logs: {
         Row: {
@@ -66,6 +67,7 @@ export interface Database {
           notes?: string | null;
           meta?: Json | null;
         };
+        Relationships: [];
       };
       plant_photos: {
         Row: {
@@ -89,6 +91,7 @@ export interface Database {
           content_type?: string;
           byte_size?: number | null;
         };
+        Relationships: [];
       };
       plant_diagnoses: {
         Row: {
@@ -116,6 +119,7 @@ export interface Database {
           summary?: string;
           structured?: Json | null;
         };
+        Relationships: [];
       };
       care_recommendations: {
         Row: {
@@ -139,7 +143,15 @@ export interface Database {
           actions?: Json;
           source?: RecommendationSource;
         };
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: {
+      care_log_type: CareLogType;
+      recommendation_source: RecommendationSource;
+    };
+    CompositeTypes: Record<string, never>;
   };
 }
