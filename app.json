@@ -26,6 +26,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "植物の写真を選び、記録と診断に使います。"
+        }
+      ]
+    ]
   }
 }

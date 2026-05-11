@@ -2,6 +2,7 @@ import { useCallback, useLayoutEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -14,13 +15,26 @@ import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/nativ
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
 import { formatCareWhen } from "../lib/formatCareWhen";
+import { pickAndUploadPlantPhoto } from "../lib/pickAndUploadPlantPhoto";
 import { supabase } from "../lib/supabase";
+import { invokeAiDiagnose, invokeCareRecommendations } from "../lib/supabaseEdge";
 import type { MainStackParamList } from "../navigation/types";
 import { palette, radius, shadow } from "../theme/gris";
 import type { CareLogType, Database } from "../types/database";
 
 type Plant = Database["public"]["Tables"]["plants"]["Row"];
 type CareLog = Database["public"]["Tables"]["care_logs"]["Row"];
+type PlantPhoto = Database["public"]["Tables"]["plant_photos"]["Row"];
+type PlantDiagnosis = Database["public"]["Tables"]["plant_diagnoses"]["Row"];
+type CareRecommendation = Database["public"]["Tables"]["care_recommendations"]["Row"];
+
+function localDateYmd(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 
 type Nav = NativeStackNavigationProp<MainStackParamList, "PlantDetail">;
 type PlantDetailRoute = RouteProp<MainStackParamList, "PlantDetail">;
@@ -50,15 +64,47 @@ export function PlantDetailScreen() {
   const [modalType, setModalType] = useState<CareLogType | null>(null);
   const [modalNote, setModalNote] = useState("");
 
+  const [photos, setPhotos] = useState<PlantPhoto[]>([]);
+  const [photoPreviewUris, setPhotoPreviewUris] = useState<Record<string, string>>({});
+  const [diagnoses, setDiagnoses] = useState<PlantDiagnosis[]>([]);
+  const [todayCare, setTodayCare] = useState<CareRecommendation | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [careBusy, setCareBusy] = useState(false);
+
   const load = useCallback(async () => {
     setError(null);
-    const [{ data: p, error: pErr }, { data: l, error: lErr }] = await Promise.all([
+    const today = localDateYmd();
+    const [
+      { data: p, error: pErr },
+      { data: l, error: lErr },
+      { data: ph, error: phErr },
+      { data: dx, error: dxErr },
+      { data: rec, error: recErr },
+    ] = await Promise.all([
       supabase.from("plants").select("*").eq("id", plantId).maybeSingle(),
       supabase
         .from("care_logs")
         .select("*")
         .eq("plant_id", plantId)
         .order("occurred_at", { ascending: false }),
+      supabase
+        .from("plant_photos")
+        .select("*")
+        .eq("plant_id", plantId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("plant_diagnoses")
+        .select("*")
+        .eq("plant_id", plantId)
+        .order("created_at", { ascending: false })
+        .limit(8),
+      supabase
+        .from("care_recommendations")
+        .select("*")
+        .eq("plant_id", plantId)
+        .eq("for_date", today)
+        .maybeSingle(),
     ]);
     if (pErr || !p) {
       setError("植物を読み込めませんでした。");
@@ -70,6 +116,32 @@ export function PlantDetailScreen() {
       setLogs([]);
     } else {
       setLogs(l ?? []);
+    }
+    if (phErr) {
+      setPhotos([]);
+      setPhotoPreviewUris({});
+    } else {
+      setPhotos(ph ?? []);
+      const uris: Record<string, string> = {};
+      for (const row of ph ?? []) {
+        const { data: signed, error: sErr } = await supabase.storage
+          .from("plant-photos")
+          .createSignedUrl(row.storage_path, 3600);
+        if (!sErr && signed?.signedUrl) {
+          uris[row.id] = signed.signedUrl;
+        }
+      }
+      setPhotoPreviewUris(uris);
+    }
+    if (dxErr) {
+      setDiagnoses([]);
+    } else {
+      setDiagnoses(dx ?? []);
+    }
+    if (recErr) {
+      setTodayCare(null);
+    } else {
+      setTodayCare(rec ?? null);
     }
     setLoading(false);
   }, [plantId]);
@@ -150,6 +222,52 @@ export function PlantDetailScreen() {
     navigation.navigate("PlantsList");
   }
 
+  async function addPlantPhoto() {
+    setUploadingPhoto(true);
+    setError(null);
+    const result = await pickAndUploadPlantPhoto(plantId);
+    setUploadingPhoto(false);
+    if (!result.ok) {
+      if (result.cancelled) return;
+      setError(result.error);
+      return;
+    }
+    await load();
+  }
+
+  async function runDiagnosis(withLatestPhoto: boolean) {
+    const latestPhotoId = photos[0]?.id;
+    if (withLatestPhoto && !latestPhotoId) {
+      Alert.alert("写真がありません", "先に写真を追加するか、「写真なしで診断」を選んでください。");
+      return;
+    }
+    setAiBusy(true);
+    setError(null);
+    try {
+      await invokeAiDiagnose(plantId, withLatestPhoto ? latestPhotoId : undefined);
+      await load();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "AI診断に失敗しました。";
+      setError(msg);
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  async function refreshCareRecommendation() {
+    setCareBusy(true);
+    setError(null);
+    try {
+      await invokeCareRecommendations(plantId, localDateYmd());
+      await load();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "ケア提案の取得に失敗しました。";
+      setError(msg);
+    } finally {
+      setCareBusy(false);
+    }
+  }
+
   const modalTitle = modalType ? `${logTypeLabel(modalType)}を記録` : "";
 
   if (loading && !plant) {
@@ -181,7 +299,129 @@ export function PlantDetailScreen() {
         {plant.notes ? <Text style={styles.notes}>{plant.notes}</Text> : null}
       </View>
 
-      <Text style={styles.section}>記録を追加</Text>
+      <Text style={styles.section}>写真</Text>
+      <Text style={styles.hint}>アルバムから選ぶとクラウドに保存され、AI診断に使えます。</Text>
+      <Pressable
+        style={[styles.primaryOutlineBtn, uploadingPhoto && styles.actionBtnBusy]}
+        onPress={() => void addPlantPhoto()}
+        disabled={uploadingPhoto || saving}
+        accessibilityLabel="写真を追加"
+        accessibilityRole="button"
+      >
+        {uploadingPhoto ? (
+          <ActivityIndicator color={palette.accentInk} />
+        ) : (
+          <Text style={styles.primaryOutlineBtnText}>写真を追加</Text>
+        )}
+      </Pressable>
+      {photos.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.photoStrip}
+          contentContainerStyle={styles.photoStripInner}
+        >
+          {photos.map((ph) =>
+            photoPreviewUris[ph.id] ? (
+              <Image
+                key={ph.id}
+                source={{ uri: photoPreviewUris[ph.id] }}
+                style={styles.photoThumb}
+                accessibilityLabel="植物の写真"
+              />
+            ) : (
+              <View key={ph.id} style={[styles.photoThumb, styles.photoThumbPlaceholder]} />
+            ),
+          )}
+        </ScrollView>
+      ) : (
+        <Text style={styles.emptyLogs}>まだ写真がありません。</Text>
+      )}
+
+      <Text style={styles.section}>AI による状態のメモ</Text>
+      <Text style={styles.hint}>
+        サーバー側で整理したメモです。病気の確定診断ではありません。不安なときは専門家に相談してください。
+      </Text>
+      <View style={styles.rowBtns}>
+        <Pressable
+          style={[
+            styles.secondaryBtn,
+            (aiBusy || photos.length === 0) && styles.actionBtnBusy,
+          ]}
+          onPress={() => void runDiagnosis(true)}
+          disabled={aiBusy || photos.length === 0}
+          accessibilityLabel="最新の写真でAI診断"
+          accessibilityRole="button"
+        >
+          {aiBusy ? (
+            <ActivityIndicator color={palette.accentInk} />
+          ) : (
+            <Text style={styles.secondaryBtnText}>最新の写真で診断</Text>
+          )}
+        </Pressable>
+        <Pressable
+          style={[styles.secondaryBtn, aiBusy && styles.actionBtnBusy]}
+          onPress={() => void runDiagnosis(false)}
+          disabled={aiBusy}
+          accessibilityLabel="写真なしでAI診断"
+          accessibilityRole="button"
+        >
+          <Text style={styles.secondaryBtnText}>写真なしで診断</Text>
+        </Pressable>
+      </View>
+      {diagnoses.length === 0 ? (
+        <Text style={styles.emptyLogs}>まだ診断結果がありません。</Text>
+      ) : (
+        diagnoses.map((d) => (
+          <View key={d.id} style={styles.diagnosisCard}>
+            <Text style={styles.diagnosisDate}>
+              {new Date(d.created_at).toLocaleString("ja-JP", {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </Text>
+            <Text style={styles.diagnosisSummary}>{d.summary}</Text>
+          </View>
+        ))
+      )}
+
+      <Text style={styles.section}>今日のケア提案</Text>
+      <Text style={styles.hint}>
+        育成ログと本日の日付をもとにルールで提案します（Edge Functions のスタブ／ルール）。
+      </Text>
+      <Pressable
+        style={[styles.primaryOutlineBtn, careBusy && styles.actionBtnBusy]}
+        onPress={() => void refreshCareRecommendation()}
+        disabled={careBusy}
+        accessibilityLabel="今日のケア提案を取得"
+        accessibilityRole="button"
+      >
+        {careBusy ? (
+          <ActivityIndicator color={palette.accentInk} />
+        ) : (
+          <Text style={styles.primaryOutlineBtnText}>提案を取得・更新</Text>
+        )}
+      </Pressable>
+      {todayCare ? (
+        <View style={styles.careCard}>
+          {(Array.isArray(todayCare.actions) ? todayCare.actions : []).map((item, i) => {
+            const a = item as { kind?: string; note?: string };
+            return (
+              <Text key={i} style={styles.careLine}>
+                • {a.note ?? ""}
+              </Text>
+            );
+          })}
+        </View>
+      ) : (
+        <Text style={styles.emptyLogs}>
+          まだ今日の提案がありません。上のボタンで取得してください。
+        </Text>
+      )}
+
+      <Text style={styles.section}>育成ログ</Text>
       <Text style={styles.hint}>
         タップ後にメモを付けられます（液肥の倍率・剪定部位など）。
       </Text>
@@ -493,5 +733,98 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
     letterSpacing: 0.8,
+  },
+  primaryOutlineBtn: {
+    alignSelf: "flex-start",
+    paddingVertical: 13,
+    paddingHorizontal: 18,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: palette.accentMuted,
+    backgroundColor: palette.surface,
+    marginBottom: 12,
+    minWidth: 160,
+    alignItems: "center",
+  },
+  primaryOutlineBtnText: {
+    color: palette.accentInk,
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  photoStrip: {
+    marginBottom: 22,
+    maxHeight: 120,
+  },
+  photoStripInner: {
+    gap: 10,
+    paddingVertical: 4,
+  },
+  photoThumb: {
+    width: 108,
+    height: 108,
+    borderRadius: radius.md,
+    backgroundColor: palette.mistLight,
+  },
+  photoThumbPlaceholder: {
+    borderWidth: 1,
+    borderColor: palette.mist,
+  },
+  rowBtns: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 14,
+  },
+  secondaryBtn: {
+    flexGrow: 1,
+    minWidth: "42%",
+    paddingVertical: 13,
+    paddingHorizontal: 12,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: palette.accentMuted,
+    backgroundColor: palette.surfaceElevated,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 46,
+  },
+  secondaryBtnText: {
+    color: palette.accentInk,
+    fontSize: 13,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  diagnosisCard: {
+    backgroundColor: palette.surfaceElevated,
+    borderRadius: radius.md,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: palette.mistLight,
+  },
+  diagnosisDate: {
+    fontSize: 12,
+    color: palette.inkFaint,
+    marginBottom: 8,
+  },
+  diagnosisSummary: {
+    fontSize: 14,
+    color: palette.inkMuted,
+    lineHeight: 21,
+  },
+  careCard: {
+    backgroundColor: palette.hazeBg,
+    borderRadius: radius.md,
+    padding: 16,
+    marginTop: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: palette.mistLight,
+  },
+  careLine: {
+    fontSize: 14,
+    color: palette.ink,
+    lineHeight: 22,
+    marginBottom: 6,
   },
 });
