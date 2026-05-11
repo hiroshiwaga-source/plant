@@ -9,7 +9,7 @@ schemas = ["public", "graphql_public", "storage"]
 extra_search_path = ["public", "extensions"]
 
 [db]
-major_version = 15
+major_version = 17
 
 [studio]
 enabled = true

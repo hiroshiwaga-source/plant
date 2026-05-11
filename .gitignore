@@ -6,6 +6,9 @@
 # OS
 .DS_Store
 
+# Supabase CLI (local link metadata — do not commit)
+supabase/.temp/
+
 # Expo / Node
 node_modules/
 dist/
